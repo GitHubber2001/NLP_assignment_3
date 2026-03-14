@@ -1,8 +1,2 @@
 .venv/
 __pycache__/
-
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.tiff
