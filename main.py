@@ -45,8 +45,8 @@ def main() -> None:
     torch.no_grad()
 
     plot_histogram(
-        data=[],
-        title="To be able to push save_data to Github",
+        data=[1, 2, 3, 4],
+        title="Title",
         xlabel="X",
         ylabel="Y",
     )
