@@ -20,7 +20,7 @@ import models
 import preprocessing
 from evaluation import display_key_metrics
 from utilities.debug import DEBUG_ENABLED
-from utilities.plots import save_plots, plot_histogram
+from utilities.plots import save_open_plots
 
 # fixed random seed
 RANDOM_SEED = 42
@@ -41,20 +41,20 @@ def set_deterministic_behaviour(random_seed):
 def main() -> None:
     set_deterministic_behaviour(RANDOM_SEED)
 
-    # for peformance
-    torch.no_grad()
-
-    plot_histogram(
-        data=[1, 2, 3, 4],
-        title="Title",
-        xlabel="X",
-        ylabel="Y",
-    )
+    plt.figure()
+    plt.hist([1, 2, 3, 4], "auto")
+    plt.title("Title")
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.show(block=False)
 
     if DEBUG_ENABLED:
-        save_plots()
+        save_open_plots()
 
 
 if __name__ == "__main__":
     with TimeManager("Program", True):
         main()
+
+    # to keep plots open
+    plt.show()
