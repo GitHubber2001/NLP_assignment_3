@@ -47,6 +47,8 @@ def get_accelerator_device() -> str:
     else:
         device = "cpu"
 
+    print(f"Using device {device}")
+
     return device
 
 
