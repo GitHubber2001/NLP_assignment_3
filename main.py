@@ -38,8 +38,45 @@ def set_deterministic_behaviour(random_seed):
     torch.backends.cudnn.benchmark = False
 
 
+def get_accelerator_device() -> str:
+    """Returns accelerator device for boosting performance"""
+
+    current_accelerator = torch.accelerator.current_accelerator(True)
+    if current_accelerator is not None:
+        device = current_accelerator.type
+    else:
+        device = "cpu"
+
+    return device
+
+
 def main() -> None:
     set_deterministic_behaviour(RANDOM_SEED)
+    device = get_accelerator_device()
+    model_name = "distilbert-base-uncased"
+    print(f"Using model {model_name}")
+
+    with TimeManager("Split"):
+        train_df, dev_df, test_df = preprocessing.preprocessing(RANDOM_SEED)
+        tokenizer = preprocessing.setup_tokenizer(model_name)
+        train_df_tokens, dev_df_tokens, test_df_tokens = (
+            preprocessing.tokenize_datasets(
+                tokenizer, train_df, dev_df, test_df
+            )
+        )
+
+    with TimeManager("Training_setup"):
+        model = models.get_model(model_name, 4, device)
+        trainer = model_training.generate_trainer(
+            model, train_df_tokens, dev_df_tokens
+        )
+
+    with TimeManager("Training"):
+        trainer.train()
+
+    with TimeManager("Evaluation"):
+        results = trainer.evaluate()
+        print(results)
 
     plt.figure()
     plt.hist([1, 2, 3, 4], "auto")
