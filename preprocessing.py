@@ -14,7 +14,7 @@ def merge_colums(dataframes: list):
         dataframe.drop(columns=["title", "description"], inplace=True)
 
 
-def preprocessing(random_seed: int):
+def preprocessing(random_seed: int, max_size: int | None = None):
     """Returns preprocessed train, validation and test sets from the dataset"""
 
     test_df = pd.read_json(os.path.join("data", "test.jsonl"), lines=True)
@@ -29,6 +29,16 @@ def preprocessing(random_seed: int):
     test_df["label"] -= 1
 
     merge_colums([train_df, validation_df, test_df])
+
+    if max_size:
+        if train_df.shape[0] > max_size:
+            train_df = train_df.sample(max_size, random_state=random_seed)
+        if validation_df.shape[0] > max_size:
+            validation_df = validation_df.sample(
+                max_size, random_state=random_seed
+            )
+        if test_df.shape[0] > max_size:
+            test_df = test_df.sample(max_size, random_state=random_seed)
 
     return (train_df, validation_df, test_df)
 

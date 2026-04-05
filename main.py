@@ -59,7 +59,7 @@ def main() -> None:
     print(f"Using model {model_name}")
 
     with TimeManager("Split"):
-        train_df, dev_df, test_df = preprocessing.preprocessing(RANDOM_SEED)
+        train_df, dev_df, test_df = preprocessing.preprocessing(RANDOM_SEED, 100)
         tokenizer = preprocessing.setup_tokenizer(model_name)
         train_df_tokens, dev_df_tokens, test_df_tokens = (
             preprocessing.tokenize_datasets(
