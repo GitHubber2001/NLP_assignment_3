@@ -6,21 +6,20 @@ Nikolaos Skoufis (s5617804)
 
 from utilities.timer import TimeManager
 
-with TimeManager("Torch imports"):
+with TimeManager("Imports"):
+    import random
+
+    import matplotlib.pyplot as plt
+    import numpy as np
     import torch
 
-import random
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-import error_analysis
-import model_training
-import models
-import preprocessing
-from evaluation import display_key_metrics
-from utilities.debug import DEBUG_ENABLED
-from utilities.plots import save_open_plots
+    import error_analysis
+    import model_training
+    import models
+    import preprocessing
+    from evaluation import display_key_metrics
+    from utilities.debug import DEBUG_ENABLED
+    from utilities.plots import save_open_plots
 
 # fixed random seed
 RANDOM_SEED = 42
@@ -54,23 +53,25 @@ def get_accelerator_device() -> str:
 
 def main() -> None:
     set_deterministic_behaviour(RANDOM_SEED)
+
     device = get_accelerator_device()
     model_name = "distilbert-base-uncased"
     print(f"Using model {model_name}")
 
     with TimeManager("Split"):
-        train_df, dev_df, test_df = preprocessing.preprocessing(RANDOM_SEED, 100)
+        max_size_dataframes = 100
+        train_df, dev_df, test_df = preprocessing.preprocessing(
+            RANDOM_SEED, max_size_dataframes
+        )
         tokenizer = preprocessing.setup_tokenizer(model_name)
         train_df_tokens, dev_df_tokens, test_df_tokens = (
-            preprocessing.tokenize_datasets(
-                tokenizer, train_df, dev_df, test_df
-            )
+            preprocessing.tokenize_datasets(tokenizer, train_df, dev_df, test_df)
         )
 
     with TimeManager("Training_setup"):
-        model = models.get_model(model_name, 4, device)
+        transformer_model = models.get_model(model_name, 4, device)
         trainer = model_training.generate_trainer(
-            model, train_df_tokens, dev_df_tokens
+            transformer_model, train_df_tokens, dev_df_tokens
         )
 
     with TimeManager("Training"):
@@ -79,13 +80,6 @@ def main() -> None:
     with TimeManager("Evaluation"):
         results = trainer.evaluate()
         print(results)
-
-    plt.figure()
-    plt.hist([1, 2, 3, 4], "auto")
-    plt.title("Title")
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.show(block=False)
 
     if DEBUG_ENABLED:
         save_open_plots()
