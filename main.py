@@ -28,8 +28,9 @@ with TimeManager("Imports"):
     from utilities.debug import DEBUG_ENABLED
     from utilities.plots import save_open_plots
 
-# fixed random seed
-RANDOM_SEED = 42
+
+RANDOM_SEED = 42  # fixed random seed
+MAX_SIZE_DATAFRAMES = 2500  # the higher the slower
 
 
 def set_deterministic_behaviour(random_seed):
@@ -62,13 +63,13 @@ def main() -> None:
     set_deterministic_behaviour(RANDOM_SEED)
 
     device = get_accelerator_device()
+
     model_name = "distilbert-base-uncased"
     print(f"Using model {model_name}")
 
     with TimeManager("Split"):
-        max_size_dataframes = 100
         train_df, dev_df, test_df = preprocessing.preprocessing(
-            RANDOM_SEED, max_size_dataframes
+            RANDOM_SEED, MAX_SIZE_DATAFRAMES
         )
         tokenizer = preprocessing.setup_tokenizer(model_name)
         train_df_tokens, dev_df_tokens, test_df_tokens = (
@@ -77,6 +78,8 @@ def main() -> None:
 
     with TimeManager("Training_setup"):
         transformer_model = models.get_model(model_name, 4, device)
+        transformer_model.train()  # training mode
+
         trainer = model_training.generate_trainer(
             transformer_model, train_df_tokens, dev_df_tokens
         )
@@ -85,6 +88,8 @@ def main() -> None:
         trainer.train()
 
     with TimeManager("Evaluation"), torch.no_grad():
+        transformer_model.eval()  # evaluation mode
+
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         def tokenize_function(dataframe: pd.DataFrame):
@@ -114,6 +119,7 @@ def main() -> None:
             model_name=f"Transformer ({model_name})",
             num_examples=10,
         )
+
         # 3. Run Slice Evaluation (Length Buckets)
         evaluate_length_buckets(
             texts=texts, true_labels=y_real, predictions=test_predictions
@@ -124,7 +130,7 @@ def main() -> None:
         def predict_texts(new_texts):
             new_dataset = Dataset.from_dict({"text": new_texts})
             new_tokenized = new_dataset.map(tokenize_function, batched=True)
-            new_output = trainer.predict(new_tokenized)
+            new_output = trainer.predict(new_tokenized)  # type: ignore
             return [np.argmax(logits).item() for logits in new_output.predictions]
 
         evaluate_keyword_masking(
@@ -132,7 +138,11 @@ def main() -> None:
         )
 
     if DEBUG_ENABLED:
-        save_open_plots()
+        save_open_plots(
+            prefix="fig_",
+            postfix=f"_MAX_DF={MAX_SIZE_DATAFRAMES}",
+            file_extension=".png",
+        )
 
 
 if __name__ == "__main__":

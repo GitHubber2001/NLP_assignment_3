@@ -1,6 +1,7 @@
 import re
 
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
     accuracy_score,
@@ -30,7 +31,7 @@ def display_key_metrics(y_real, y_prediction, model_name: str) -> None:
     plt.show(block=False)
 
 
-def evaluate_length_buckets(texts: list, true_labels: list, predictions: list) -> None:
+def evaluate_length_buckets(texts: list, true_labels, predictions: list) -> None:
     """
     Evaluates model performance across different text length buckets.
     Splits data into Short (< 30 words), Medium (30-60 words), and Long (> 60 words).
@@ -78,7 +79,7 @@ def evaluate_length_buckets(texts: list, true_labels: list, predictions: list) -
     print(f"{'=' * 60}\n")
 
 
-def evaluate_keyword_masking(texts: list, true_labels: list, model_pipeline_fn) -> None:
+def evaluate_keyword_masking(texts: list, true_labels, model_pipeline_fn) -> None:
     """
     Masks highly predictive keywords and re-evaluates to test model robustness.
     model_pipeline_fn is a function that takes a list of strings and returns predicted labels.
