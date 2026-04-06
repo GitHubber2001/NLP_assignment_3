@@ -31,7 +31,7 @@ with TimeManager("Imports"):
 
 
 RANDOM_SEED = 42  # fixed random seed
-MAX_SIZE_DATAFRAMES = 100  # the higher the slower
+MAX_SIZE_DATAFRAMES = 250  # the higher the slower
 
 
 def set_deterministic_behaviour(random_seed):
