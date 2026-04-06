@@ -11,7 +11,10 @@ with TimeManager("Imports"):
 
     import matplotlib.pyplot as plt
     import numpy as np
+    import pandas as pd
     import torch
+    from datasets import Dataset
+    from transformers import AutoTokenizer
 
     import error_analysis
     import model_training
@@ -77,9 +80,23 @@ def main() -> None:
     with TimeManager("Training"):
         trainer.train()
 
-    with TimeManager("Evaluation"):
-        results = trainer.evaluate()
-        print(results)
+    with TimeManager("Evaluation"), torch.no_grad():
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+        def tokenize_function(dataframe: pd.DataFrame):
+            """Returns tokenized data"""
+
+            return tokenizer(dataframe["text"], padding="max_length", truncation=True)
+
+        test_dataset = Dataset.from_pandas(test_df[["text"]])
+        tokenized_test_dataset = test_dataset.map(tokenize_function, batched=True)
+
+        test_prediction_output = trainer.predict(tokenized_test_dataset)  # type: ignore
+        test_logits = test_prediction_output.predictions
+        test_predictions = [np.argmax(logits).item() for logits in test_logits]
+
+        print(test_logits)
+        print(test_predictions)
 
     if DEBUG_ENABLED:
         save_open_plots()

@@ -3,7 +3,7 @@ import os
 import datasets
 import pandas as pd
 from sklearn import model_selection
-from transformers import AutoTokenizer, BatchEncoding
+from transformers import AutoTokenizer
 
 
 def merge_colums(dataframes: list):
@@ -34,9 +34,7 @@ def preprocessing(random_seed: int, max_size: int | None = None):
         if train_df.shape[0] > max_size:
             train_df = train_df.sample(max_size, random_state=random_seed)
         if validation_df.shape[0] > max_size:
-            validation_df = validation_df.sample(
-                max_size, random_state=random_seed
-            )
+            validation_df = validation_df.sample(max_size, random_state=random_seed)
         if test_df.shape[0] > max_size:
             test_df = test_df.sample(max_size, random_state=random_seed)
 
