@@ -26,11 +26,12 @@ with TimeManager("Imports"):
         evaluate_length_buckets,
     )
     from utilities.debug import DEBUG_ENABLED
+    from utilities.log import Logger
     from utilities.plots import save_open_plots
 
 
 RANDOM_SEED = 42  # fixed random seed
-MAX_SIZE_DATAFRAMES = 2500  # the higher the slower
+MAX_SIZE_DATAFRAMES = 10  # the higher the slower
 
 
 def set_deterministic_behaviour(random_seed):
@@ -65,7 +66,7 @@ def main() -> None:
     device = get_accelerator_device()
 
     model_name = "distilbert-base-uncased"
-    print(f"Using model {model_name}")
+    Logger.log(f"Using model {model_name}")
 
     with TimeManager("Split"):
         train_df, dev_df, test_df = preprocessing.preprocessing(
@@ -137,6 +138,11 @@ def main() -> None:
             texts=texts, true_labels=y_real, model_pipeline_fn=predict_texts
         )
 
+
+if __name__ == "__main__":
+    with TimeManager("Program", True):
+        main()
+
     if DEBUG_ENABLED:
         save_open_plots(
             prefix="fig_",
@@ -144,10 +150,7 @@ def main() -> None:
             file_extension=".png",
         )
 
-
-if __name__ == "__main__":
-    with TimeManager("Program", True):
-        main()
+        Logger.save_and_reset_logs(f"logs_MAX_DF={MAX_SIZE_DATAFRAMES}.txt")
 
     # to keep plots open
     plt.show()

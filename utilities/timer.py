@@ -2,7 +2,7 @@ from functools import wraps
 from time import perf_counter
 from typing import Callable, Self
 
-from utilities.debug import DEBUG_ENABLED
+from utilities.log import Logger
 
 
 class Timer:
@@ -26,7 +26,7 @@ class Timer:
 
         self._start_time = perf_counter()
 
-        print(f"Process '{self._name}' started")
+        Logger.log(f"Process '{self._name}' started")
 
         return self
 
@@ -42,9 +42,8 @@ class Timer:
         self._stop_time = perf_counter()
 
         elapsed_time = self._stop_time - self._start_time
-
-        if DEBUG_ENABLED:
-            print(f"Time elapsed during '{self._name}': {elapsed_time:.2f}")
+  
+        Logger.log(f"Time elapsed during '{self._name}': {elapsed_time:.2f}")
 
     @staticmethod
     def time(name: str) -> Callable:
@@ -65,8 +64,7 @@ class Timer:
 
                 elapsed_time = end_time - start_time
 
-                if DEBUG_ENABLED:
-                    print(f"Time elapsed during '{name}': {elapsed_time:.2f}")
+                Logger.log(f"Time elapsed during '{name}': {elapsed_time:.2f}")
 
                 return results
 
@@ -97,8 +95,7 @@ class TimeManager:
     def __enter__(self):
         self._start_time = perf_counter()
 
-        if DEBUG_ENABLED:
-            print(f"Process '{self.name}' started")
+        Logger.log(f"Process '{self.name}' started")
 
         return self
 
@@ -108,26 +105,25 @@ class TimeManager:
 
         TimeManager.processes_info.append([self.name, elapsed_time, exc_type])
 
-        if DEBUG_ENABLED:
-            if exc_type:
-                exc_message = f"with exception '{exc_type.__name__}: {exc_value}'"
-                print(
-                    f"Time elapsed during '{self.name}' {exc_message}: {elapsed_time:.2f}"
-                )
-            else:
-                print(f"Time elapsed during '{self.name}': {elapsed_time:.2f}")
+        if exc_type:
+            exc_message = f"with exception '{exc_type.__name__}: {exc_value}'"
+            Logger.log(
+                f"Time elapsed during '{self.name}' {exc_message}: {elapsed_time:.2f}"
+            )
+        else:
+            Logger.log(f"Time elapsed during '{self.name}': {elapsed_time:.2f}")
 
-            if self.get_summary:
-                print("\nSummary duration processes:")
+        if self.get_summary:
+            Logger.log("\nSummary duration processes:")
 
-                for i, info in enumerate(TimeManager.processes_info):
-                    process = info[0]
-                    duration = info[1]
-                    exception_type = info[2]
+            for i, info in enumerate(TimeManager.processes_info):
+                process = info[0]
+                duration = info[1]
+                exception_type = info[2]
 
-                    if exception_type:
-                        print(
-                            f"{i + 1} {process}: {duration:.2f} (caught {exception_type.__name__} exception)"
-                        )
-                    else:
-                        print(f"{i + 1} {process}: {duration:.2f}")
+                if exception_type:
+                    Logger.log(
+                        f"{i + 1} {process}: {duration:.2f} (caught {exception_type.__name__} exception)"
+                    )
+                else:
+                    Logger.log(f"{i + 1} {process}: {duration:.2f}")

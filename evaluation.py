@@ -10,6 +10,8 @@ from sklearn.metrics import (
     f1_score,
 )
 
+from utilities.log import Logger
+
 
 def display_key_metrics(y_real, y_prediction, model_name: str) -> None:
     """Displays key evaluation metrics"""
@@ -21,9 +23,9 @@ def display_key_metrics(y_real, y_prediction, model_name: str) -> None:
     confusion_matrix_display_regression.plot()
     accuracy_classification_score = accuracy_score(y_real, y_prediction, normalize=True)
 
-    print(f"{model_name}:\n {report}")
+    Logger.log(f"{model_name}:\n {report}")
 
-    print(
+    Logger.log(
         f"{model_name}: Accuracy classificaion score: {accuracy_classification_score}"
     )
 
@@ -36,9 +38,9 @@ def evaluate_length_buckets(texts: list, true_labels, predictions: list) -> None
     Evaluates model performance across different text length buckets.
     Splits data into Short (< 30 words), Medium (30-60 words), and Long (> 60 words).
     """
-    print(f"\n{'=' * 60}")
-    print(" SLICE EVALUATION 1: Length Buckets")
-    print(f"{'=' * 60}")
+    Logger.log(f"\n{'=' * 60}")
+    Logger.log(" SLICE EVALUATION 1: Length Buckets")
+    Logger.log(f"{'=' * 60}")
 
     # Define our buckets
     buckets = {
@@ -61,9 +63,9 @@ def evaluate_length_buckets(texts: list, true_labels, predictions: list) -> None
         buckets[bucket_name]["y_true"].append(true_lbl)
         buckets[bucket_name]["y_pred"].append(pred_lbl)
 
-    # Calculate and print metrics per bucket
-    print(f"{'Bucket':<25} | {'Count':<6} | {'Accuracy':<8} | {'Macro-F1':<8}")
-    print("-" * 55)
+    # Calculate and log metrics per bucket
+    Logger.log(f"{'Bucket':<25} | {'Count':<6} | {'Accuracy':<8} | {'Macro-F1':<8}")
+    Logger.log("-" * 55)
 
     for name, data in buckets.items():
         y_t = data["y_true"]
@@ -72,11 +74,11 @@ def evaluate_length_buckets(texts: list, true_labels, predictions: list) -> None
         if len(y_t) > 0:
             acc = accuracy_score(y_t, y_p)
             f1 = f1_score(y_t, y_p, average="macro")
-            print(f"{name:<25} | {len(y_t):<6} | {acc:.4f}   | {f1:.4f}")
+            Logger.log(f"{name:<25} | {len(y_t):<6} | {acc:.4f}   | {f1:.4f}")
         else:
-            print(f"{name:<25} | {0:<6} | N/A        | N/A")
+            Logger.log(f"{name:<25} | {0:<6} | N/A        | N/A")
 
-    print(f"{'=' * 60}\n")
+    Logger.log(f"{'=' * 60}\n")
 
 
 def evaluate_keyword_masking(texts: list, true_labels, model_pipeline_fn) -> None:
@@ -84,9 +86,9 @@ def evaluate_keyword_masking(texts: list, true_labels, model_pipeline_fn) -> Non
     Masks highly predictive keywords and re-evaluates to test model robustness.
     model_pipeline_fn is a function that takes a list of strings and returns predicted labels.
     """
-    print(f"\n{'=' * 60}")
-    print(" SLICE EVALUATION 2: Keyword Masking Probe")
-    print(f"{'=' * 60}")
+    Logger.log(f"\n{'=' * 60}")
+    Logger.log(" SLICE EVALUATION 2: Keyword Masking Probe")
+    Logger.log(f"{'=' * 60}")
 
     # Words that strongly indicate Business, Sports, Sci/Tech, or World news
     keywords_to_mask = [
@@ -124,17 +126,17 @@ def evaluate_keyword_masking(texts: list, true_labels, model_pipeline_fn) -> Non
         if count > 0:
             texts_changed += 1
 
-    print(f"Masked keywords in {texts_changed} out of {len(texts)} articles.")
+    Logger.log(f"Masked keywords in {texts_changed} out of {len(texts)} articles.")
 
     # Get new predictions for the masked texts
-    print("Running predictions on masked texts...")
+    Logger.log("Running predictions on masked texts...")
     masked_predictions = model_pipeline_fn(masked_texts)
 
     # Calculate new metrics
     acc = accuracy_score(true_labels, masked_predictions)
     f1 = f1_score(true_labels, masked_predictions, average="macro")
 
-    print(f"\nResults on Masked Data:")
-    print(f"Accuracy : {acc:.4f}")
-    print(f"Macro-F1 : {f1:.4f}")
-    print(f"{'=' * 60}\n")
+    Logger.log("\nResults on Masked Data:")
+    Logger.log(f"Accuracy : {acc:.4f}")
+    Logger.log(f"Macro-F1 : {f1:.4f}")
+    Logger.log(f"{'=' * 60}\n")
