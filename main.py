@@ -20,7 +20,11 @@ with TimeManager("Imports"):
     import model_training
     import models
     import preprocessing
-    from evaluation import display_key_metrics
+    from evaluation import (
+        display_key_metrics,
+        evaluate_keyword_masking,
+        evaluate_length_buckets,
+    )
     from utilities.debug import DEBUG_ENABLED
     from utilities.plots import save_open_plots
 
@@ -85,18 +89,47 @@ def main() -> None:
 
         def tokenize_function(dataframe: pd.DataFrame):
             """Returns tokenized data"""
-
             return tokenizer(dataframe["text"], padding="max_length", truncation=True)
 
-        test_dataset = Dataset.from_pandas(test_df[["text"]])
+        test_dataset = Dataset.from_pandas(test_df[["text", "label"]])
         tokenized_test_dataset = test_dataset.map(tokenize_function, batched=True)
 
+        # Get predictions and true labels from the Trainer
         test_prediction_output = trainer.predict(tokenized_test_dataset)  # type: ignore
         test_logits = test_prediction_output.predictions
+        y_real = test_prediction_output.label_ids  # These are the true labels
+
+        # Convert logits to class predictions
         test_predictions = [np.argmax(logits).item() for logits in test_logits]
 
-        print(test_logits)
-        print(test_predictions)
+        # 1. Run Evaluation (Accuracy, F1, Confusion Matrix)
+        display_key_metrics(y_real, test_predictions, f"Transformer ({model_name})")
+
+        # 2. Run Error Analysis
+        texts = test_df["text"].tolist()
+        error_analysis.print_misclassified_examples(
+            texts=texts,
+            true_labels=y_real,
+            predictions=test_predictions,
+            model_name=f"Transformer ({model_name})",
+            num_examples=10,
+        )
+        # 3. Run Slice Evaluation (Length Buckets)
+        evaluate_length_buckets(
+            texts=texts, true_labels=y_real, predictions=test_predictions
+        )
+
+        # 4. Run Slice Evaluation (Keyword Masking)
+        # We need a small helper function to tokenize and predict new texts on the fly
+        def predict_texts(new_texts):
+            new_dataset = Dataset.from_dict({"text": new_texts})
+            new_tokenized = new_dataset.map(tokenize_function, batched=True)
+            new_output = trainer.predict(new_tokenized)
+            return [np.argmax(logits).item() for logits in new_output.predictions]
+
+        evaluate_keyword_masking(
+            texts=texts, true_labels=y_real, model_pipeline_fn=predict_texts
+        )
 
     if DEBUG_ENABLED:
         save_open_plots()
